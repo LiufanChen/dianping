@@ -8,9 +8,13 @@ import com.clf.entity.User;
 import com.clf.mapper.UserMapper;
 import com.clf.service.IUserService;
 import com.clf.utils.RegexUtils;
+import org.apache.catalina.Session;
+import org.apache.catalina.manager.util.SessionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
+
+import static com.clf.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 /**
  * <p>
@@ -49,9 +53,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         User user = query().eq("phone",phone).one();
         
-//        if(user==null){
-//            user = createUserWithPhone(phone);
-//        }
-        return null;
+        if(user==null){
+            user = createUserWithPhone(phone);
+        }
+
+        session.setAttribute("User",user);
+
+        return Result.ok();
+    }
+
+
+    private User createUserWithPhone(String phone) {
+        User user = new User();
+        user.setPhone(phone);
+        user.setNickName(USER_NICK_NAME_PREFIX+RandomUtil.randomString(10));
+        s   ave(user);
+        return user;
     }
 }
