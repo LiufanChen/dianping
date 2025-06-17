@@ -1,5 +1,6 @@
 package com.clf.service;
 
+import com.clf.dto.Result;
 import com.clf.entity.ShopType;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IShopTypeService extends IService<ShopType> {
 
+    Result queryTypeList();
 }

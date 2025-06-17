@@ -61,9 +61,9 @@ public class UserController {
 
     @GetMapping("/me")
     public Result me(){
-        UserDTO user = UserHolder.getUser();
-        System.out.println(user);
-        return Result.ok(user);
+        // 获取当前登录的用户并返回
+        log.debug("登录验证成功，经过me这一步");
+        return Result.ok(UserHolder.getUser());
     }
 
     @GetMapping("/info/{id}")

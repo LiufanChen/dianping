@@ -1,5 +1,6 @@
 package com.clf.service;
 
+import com.clf.dto.Result;
 import com.clf.entity.Shop;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -13,4 +14,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IShopService extends IService<Shop> {
 
+
+    Result queryById(Long id);
 }

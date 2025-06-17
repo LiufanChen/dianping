@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.clf.utils.RedisConstansts.*;
+import static com.clf.utils.RedisConstants.*;
 import static com.clf.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 /**
@@ -81,9 +81,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                         .setIgnoreNullValue(true)
                         .setFieldValueEditor((p,q) -> q.toString()));
 
-        stringRedisTemplate.opsForHash().putAll(LOGIN_TOKEN_KEY+token,userMap);
-        stringRedisTemplate.expire(LOGIN_TOKEN_KEY+token,LOGIN_TOKEN_TTL, TimeUnit.MINUTES);
-        return Result.ok();
+        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY+token,userMap);
+        stringRedisTemplate.expire(LOGIN_USER_KEY+token,LOGIN_USER_TTL, TimeUnit.MINUTES);
+        return Result.ok(token); //!!登陆后需要将token返回给前端
     }
 
 
