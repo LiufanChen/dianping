@@ -37,9 +37,10 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
 
     @Override
     @Transactional
-    public void addSeckillVoucher(Voucher voucher) {
+    public Result addSeckillVoucher(Voucher voucher) {
         // 保存优惠券
         save(voucher);
+        log.debug("保存了一条优惠券"+voucher);
         // 保存秒杀信息
         SeckillVoucher seckillVoucher = new SeckillVoucher();
         seckillVoucher.setVoucherId(voucher.getId());
@@ -47,5 +48,8 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> impl
         seckillVoucher.setBeginTime(voucher.getBeginTime());
         seckillVoucher.setEndTime(voucher.getEndTime());
         seckillVoucherService.save(seckillVoucher);
+        log.debug("保存了一条秒杀优惠券"+voucher);
+
+        return Result.ok(voucher.getId());
     }
 }

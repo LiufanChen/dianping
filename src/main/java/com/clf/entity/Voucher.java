@@ -24,6 +24,8 @@ public class Voucher implements Serializable {
 
     /**
      * 主键
+     * 主键字段需要使用 @TableId 注解，并指定主键生成策略为自增
+     * 调用 save 方法保存对象后，MyBatis-Plus 会将数据库生成的主键值自动回填到对象的 id 字段中。
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
