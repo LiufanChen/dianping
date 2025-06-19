@@ -15,8 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static com.clf.utils.RedisConstants.CACHE_NULL_TTL;
-import static com.clf.utils.RedisConstants.LOCK_SHOP_KEY;
+import static com.clf.utils.RedisConstants.*;
 
 /**
  * ClassName: CacheClient
@@ -51,7 +50,6 @@ public class CacheClient {
     }
 
     //缓存穿透 置空值
-
     public <R,ID> R queryWithPassThrough(
             String keyPrefix, ID id, Class<R> type, Function<ID,R> dbFallback,Long time, TimeUnit unit) {
         String key = keyPrefix + id ;
@@ -73,7 +71,7 @@ public class CacheClient {
         this.set(key, r, time, unit);
         return r;
     }
-    //逻辑过期方法
+    //缓存击穿 逻辑过期方法
     public <R, ID> R queryWithLogicalExpire(
             String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit) {
         String key = keyPrefix + id;
@@ -118,7 +116,7 @@ public class CacheClient {
         // 6.4.返回过期的商铺信息
         return r;
     }
-    //互斥锁方式
+    //缓存击穿 互斥锁方式
     public <R, ID> R queryWithMutex(
             String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit)   {
         String key = keyPrefix + id;
@@ -169,7 +167,7 @@ public class CacheClient {
     }
 
     private boolean tryLock(String key) {
-        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", 10, TimeUnit.SECONDS);
+        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", LOCK_SHOP_TTL, TimeUnit.SECONDS);
         return BooleanUtil.isTrue(flag);
     }
     private void unlock(String key) {

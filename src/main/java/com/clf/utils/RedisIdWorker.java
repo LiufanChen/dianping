@@ -7,6 +7,9 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
+
+import static com.clf.utils.RedisConstants.LOGIN_USER_TTL;
 
 /**
  * ClassName: RedisIdWork
@@ -19,7 +22,7 @@ import java.time.format.DateTimeFormatter;
  */
 @Component
 public class RedisIdWorker {
-    private static final long BEGIN_TIMESTAMP = 1750226937595L;
+    private static final long BEGIN_TIMESTAMP = 1640995200L;
     private static final int COUNT_BITS = 32;
 
     private StringRedisTemplate stringRedisTemplate;
