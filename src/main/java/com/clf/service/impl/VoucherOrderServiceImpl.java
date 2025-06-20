@@ -54,7 +54,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 //userId是Long类型，直接使用Long对象作为锁可能导致意外行为（如自动装箱缓存问题）synchronized的锁对象必须是Object类型
 
     //用到悲观锁
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public Result createVoucherOrder(Long voucherId,Long userId) {
 //        Long userId = UserHolder.getUser().getId();
         // 5.1.查询订单
@@ -62,6 +62,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         // 5.2.判断是否存在
         if (count > 0) {
             // 用户已经购买过了
+            log.debug("用户已经购买过一次！");
             return Result.fail("用户已经购买过一次！");
         }
         // 6.扣减库存
