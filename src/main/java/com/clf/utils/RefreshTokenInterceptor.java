@@ -3,6 +3,7 @@ package com.clf.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.clf.dto.UserDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -14,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import static com.clf.utils.RedisConstants.LOGIN_USER_KEY;
 import static com.clf.utils.RedisConstants.LOGIN_USER_TTL;
 
+
+@Slf4j
 public class RefreshTokenInterceptor implements HandlerInterceptor {
 
     private StringRedisTemplate stringRedisTemplate;
@@ -26,6 +29,9 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 1.获取请求头中的token
         String token = request.getHeader("authorization");
+
+        log.debug("走了RefreshTokenInterceptor");
+
         if (StrUtil.isBlank(token)) {
             return true;
         }
@@ -43,6 +49,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         // 7.刷新token有效期
         stringRedisTemplate.expire(key, LOGIN_USER_TTL, TimeUnit.MINUTES);
         // 8.放行
+        log.debug("用户已登录："+userDTO.getNickName());
         return true;
     }
 
