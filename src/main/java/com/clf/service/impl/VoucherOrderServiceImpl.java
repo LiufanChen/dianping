@@ -71,10 +71,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         public void run() {
             while (true) {
                 try {
+                    // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
                     List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
                             Consumer.from("g1", "c1"),
                             StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
-                                    StreamOffset.create(STREAM_ORDER, ReadOffset.lastConsumed())
+                            StreamOffset.create("stream.orders", ReadOffset.lastConsumed())
                     );
                     // 2.判断订单信息是否为空
                     if (list == null || list.isEmpty()) {
@@ -85,11 +86,13 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     MapRecord<String, Object, Object> record = list.get(0);
                     Map<Object, Object> value = record.getValue();
                     VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(value, new VoucherOrder(), true);
+                    // 3.创建订单
                     createVoucherOrder(voucherOrder);
+                    // 4.确认消息 XACK
                     stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
-
                 } catch (Exception e) {
                     log.error("处理订单异常", e);
+                    //处理异常消息
                     handlePendingList();
                 }
             }
@@ -118,7 +121,12 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     // 4.确认消息 XACK
                     stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
                 } catch (Exception e) {
-                    log.error("处理订单异常", e);
+                    log.error("处理pendding订单异常", e);
+                    try{
+                        Thread.sleep(20);
+                    }catch(Exception e1){
+                        e1.printStackTrace();
+                    }
                 }
             }
         }
