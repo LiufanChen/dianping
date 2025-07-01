@@ -10,12 +10,14 @@ import com.clf.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.clf.utils.RedisIdWorker;
 import com.clf.utils.UserHolder;
+import io.lettuce.core.RedisCommandExecutionException;
 import org.aspectj.weaver.ast.Var;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -63,8 +65,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     @PostConstruct //在 Bean 初始化完成后调用
     private void init() {
+
         SECKILL_ORDER_EXECUTOR.submit(new VoucherOrderHandler());
     }
+
+
 
     private class VoucherOrderHandler implements Runnable {
         @Override
@@ -75,7 +80,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
                             Consumer.from("g1", "c1"),
                             StreamReadOptions.empty().count(1).block(Duration.ofSeconds(2)),
-                            StreamOffset.create("stream.orders", ReadOffset.lastConsumed())
+                            StreamOffset.create(STREAM_ORDER, ReadOffset.lastConsumed())
                     );
                     // 2.判断订单信息是否为空
                     if (list == null || list.isEmpty()) {
@@ -89,7 +94,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     // 3.创建订单
                     createVoucherOrder(voucherOrder);
                     // 4.确认消息 XACK
-                    stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
+                    stringRedisTemplate.opsForStream().acknowledge(STREAM_ORDER, "g1", record.getId());
                 } catch (Exception e) {
                     log.error("处理订单异常", e);
                     //处理异常消息
@@ -123,7 +128,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 } catch (Exception e) {
                     log.error("处理pendding订单异常", e);
                     try{
-                        Thread.sleep(20);
+                        Thread.sleep(2000);
                     }catch(Exception e1){
                         e1.printStackTrace();
                     }
