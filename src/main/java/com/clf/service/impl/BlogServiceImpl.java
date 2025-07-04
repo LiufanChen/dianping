@@ -1,5 +1,6 @@
 package com.clf.service.impl;
 
+import cn.hutool.core.util.BooleanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.clf.dto.Result;
 import com.clf.entity.Blog;
@@ -9,10 +10,14 @@ import com.clf.service.IBlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.clf.service.IUserService;
 import com.clf.utils.SystemConstants;
+import com.clf.utils.UserHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.clf.utils.RedisConstants.BLOG_LIKED_KEY;
 
 /**
  * <p>
@@ -28,6 +33,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
     @Autowired
     private IUserService userService;
 
+    @Autowired
+    private  StringRedisTemplate stringRedisTemplate;
+
+
     @Override
     public Result queryHotBlog(Integer current) {
         // 根据用户查询
@@ -37,7 +46,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 获取当前页数据
         List<Blog> records = page.getRecords();
         // 查询用户
-        records.forEach(this::queryBlogUser);
+        records.forEach(blog -> {
+            this.queryBlogUser(blog);
+            this.isBlogLiked(blog);
+        });
+        //查询blog是否被点赞
         return Result.ok(records);
     }
 
@@ -48,10 +61,27 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
             return Result.fail("笔记不存在！");
         }
         queryBlogUser(blog);
+        //查询blog是否被点赞
+        isBlogLiked(blog);
         return Result.ok(blog);
     }
 
+    @Override
+    public Result likeBlog(Long id) {
+        Long userId = UserHolder.getUser().getId();
 
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(BLOG_LIKED_KEY + id, userId.toString());
+        if (BooleanUtil.isFalse(isMember)){
+            boolean isSuccess = update().setSql("liked = liked + 1").eq("id", id).update();
+            if(isSuccess){
+                stringRedisTemplate.opsForSet().add(BLOG_LIKED_KEY+ id,userId.toString());
+            }
+        }else {
+            boolean isSuccess = update().setSql("liked = liked - 1").eq("id", id).update();
+            stringRedisTemplate.opsForSet().remove(BLOG_LIKED_KEY + id, userId.toString());
+        }
+        return Result.ok();
+    }
 
     private void queryBlogUser(Blog blog){
         Long userId = blog.getUserId();
@@ -60,6 +90,13 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         blog.setIcon(user.getIcon());
 
     }
+    private void isBlogLiked(Blog blog){
+        Long userId = UserHolder.getUser().getId();
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(BLOG_LIKED_KEY + blog.getId(), userId.toString());
+        blog.setIsLike(BooleanUtil.isTrue(isMember));
+
+    }
+
 
 
 
